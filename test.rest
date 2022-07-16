@@ -1,0 +1,15 @@
+GET http://localhost:9080/register
+
+
+###
+
+POST http://localhost:9080/register
+Content-Type: "application/json"
+
+
+{
+  "username": "test",
+  "password": "test",
+  "age":22,
+  "name":"test"
+}
