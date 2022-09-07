@@ -3,29 +3,22 @@ const express=require('express')
 const Route = express.Router()
 
 
-Route.get('/',checkLoggedIN ,function (req, res) {
+Route.get('/',function (req, res) {
   
-  
-  if (req.login) {
-    res.render('index.ejs',{logedIn:true})
+  if (!req.cookies['token']) {
+    res.render('index.ejs',{login:false})
   } else {
-    res.render('index.ejs',{logedIN:false})
-  }
+    res.render('index.ejs', {
+      login:true
+    })
+  } 
+
+  
   
   
 })
 
-function checkLoggedIN(req, res, next) {
-  
-  console.log(req.cookies)
-  if (req.cookies.logedin) {
-    req.login = true
-    next()
-  } else {
-    req.login = false
-    next()
-  }
-}
+
 
 
 module.exports=Route

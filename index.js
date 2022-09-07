@@ -8,6 +8,7 @@ const LoginRoutes=require('./Routes/LoginRoutes.js')
 
 const bodyParser = require('body-parser')
 const mongooes = require('mongoose')
+const cookieParser=require('cookie-parser')
 
 
 
@@ -21,6 +22,11 @@ const PORT = process.env.PORT || 8090
 
 mongooes.connect('mongodb://127.0.0.1:27017/apidata').then(conn => {
   // console.log(conn)
+  if (conn == null) {
+    console.log("Null connection")
+  } else {
+    console.log("Connected")
+  }
 }).catch(error => {
   // console.log(error)
 })
@@ -29,14 +35,20 @@ mongooes.connect('mongodb://127.0.0.1:27017/apidata').then(conn => {
 app.set('view engin', 'ejs')
 
 //middlewares
-app.use(express.urlencoded({ extended: true }))
-app.use(bodyParser.json())
 app.use(express.static(publicdir))
+app.use(bodyParser.json())
+app.use(bodyParser.urlencoded({
+  extended:true
+}))
+app.use(cookieParser())
+
 
 
 //routes
 app.use('/', IndexRoutes)
-app.use('/',LoginRoutes)
+app.use('/account',LoginRoutes)
+
+
 
 
 

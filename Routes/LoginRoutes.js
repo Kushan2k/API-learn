@@ -1,5 +1,4 @@
 const express = require('express')
-const bodyParser = require('body-parser')
 require('dotenv').config()
 
 const Route = express.Router()
@@ -7,81 +6,126 @@ const Route = express.Router()
 const UserModel = require('../Models/User.js')
 const bCrypt = require('bcrypt')
 
-const jwt=require('jsonwebtoken')
+const jwt = require('jsonwebtoken')
 
 
 
 Route.get('/login', (req, res) => {
   
-  
-  res.render('login.ejs', { title: "Login-API"})
+  console.log(req.token)
+  res.render('login.ejs', { title: "Login-API",login:false})
   
 
-}).post('/login', (req, res) => {
-  res.send("login posted")
+}).post('/login', async (req, res) => {
+
+  let data = req.body
+  
+  const { email, password } = data
+  
+  let user =await UserModel.findOne({ email: email })
+  
+  if (bCrypt.compare(password, user.password)) {
+    res.cookie('token', user.token)
+    res.redirect('/')
+  } else {
+    res.redirect('/login')
+  }
+  
+
+
 })
-
 
 Route.get("/register", (req, res) => {
 
-  res.render('register.ejs', { title: 'Register-API' })
+  
+  res.render('register.ejs', { title: 'Register-API',login:false})
+  
+
+  
   
 
 }).post('/register',(req, res) => {
 
-  const { name, email, password, age } = req.body
+  let data=req.body
 
-  
-  if (password?.length < 8 || name?.length == 0 || email?.indexOf('@') < 0) {
+  const { name, email, password, age } = data;
+
+  if (!verify(email, name, age)) {
+
+    res.redirect('account/register')
+  }else {
     
-    res.status(302).redirect('/register')
+    if (checkuser(email)) {
+      
+      let user = new UserModel({
+        email: email,
+        age: age,
+        name:name
+      })
 
-  }
+      const salt = bCrypt.genSaltSync(10)
+      const hash = bCrypt.hashSync(password, salt)
+      
+      user.password=hash
 
-  const user = new UserModel({
-    name: name,
-    email: email,
-    age:age
-  })
-  
-  bCrypt.genSalt(10, function(err, salt) {
-    bCrypt.hash(password, salt, function(err, hash) {
-        
-      if (err) {
-        res.status(403)
-      } else {
-        user.password = hash
+      const token=jwt.sign({
+        name: user.name,
+        id: user._id,
+        email:user.email
+      }, process.env.SECRET_KEY)
+      
+      user.token = token
+      
+      try {
+        user.save()
+        res.cookie('token',user.token)
+        res.redirect('/')
+      } catch (error) {
+        res.redirect('register')
       }
-    });
-  });
-  
-  try {
-    user.save()
-  } catch (er) {
-    res.status(500)
+
+    }else {
+      res.redirect('/register')
+    }
+    
   }
-
-  const token = jwt.sign({
-    id: user._id,
-    name: user.name,
-    email:user.email
-  },process.env.SECRET_KEY)
-
-  res.token = token
-  res.cookie('logedin', true)
-  res.redirect('/')
-
-  
-
-
 
 
   
 })
 
+function verify(email, name, age) {
+  
+  if (email.length == 0 || name.length == 0 || (0 > age && 100 < age)) {
+    return false
+  } else {
+    return true
+  }
+}
 
+function  checkuser(email) {
+  
+  const found = UserModel.findOne({ email: { $eq: email } }, (er, doc) => {
+    if (er) {
+      return false
+    }
+    
+    if (doc == null) {
+      return true
+    } else {
+      return false
+    }
+  })
 
-
+  if (found) {
+    console.log(found)
+    return true
+  } else {
+    return false
+  }
+  
+  
+}
 
 
 module.exports=Route

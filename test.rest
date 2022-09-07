@@ -8,8 +8,18 @@ Content-Type: "application/json"
 
 
 {
-  "username": "test",
-  "password": "test",
+  "email": "kg12345@gmail.com",
+  "password": "new",
   "age":22,
   "name":"test"
+}
+
+###
+
+POST http://localhost:9080/account/login
+Content-Type: application/json
+
+
+{
+  "name":"kushan"
 }
